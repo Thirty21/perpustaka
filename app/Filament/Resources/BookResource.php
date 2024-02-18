@@ -9,12 +9,18 @@ use Filament\Forms\Form;
 use Filament\Tables\Table;
 use Filament\Resources\Resource;
 use Filament\Tables\Columns\TextColumn;
+use Illuminate\Support\Facades\Storage;
 use Filament\Forms\Components\TextInput;
+use Filament\Tables\Columns\ImageColumn;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\RichEditor;
 use Illuminate\Database\Eloquent\Builder;
 use App\Filament\Resources\BookResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\BookResource\RelationManagers;
+use Filament\Notifications\Collection;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use PHPUnit\TestRunner\TestResult\Collector;
 
 class BookResource extends Resource
 {
@@ -32,7 +38,12 @@ class BookResource extends Resource
                 RichEditor::make('description')
                     ->required()
                     ->columnSpan(2),
-                TextInput::make('stock')->required(),
+                TextInput::make('stock')
+                    ->required()
+                    ->columnSpan(2),
+                FileUpload::make('image')
+                    ->image()
+                    ->directory('books'),
             ]);
     }
 
@@ -40,9 +51,11 @@ class BookResource extends Resource
     {
         return $table
             ->columns([
+                TextColumn::make('id'),
                 TextColumn::make('title'),
-                TextColumn::make('description'),
+                TextColumn::make('description')->limit(12),
                 TextColumn::make('stock'),
+                ImageColumn::make('image'),
             ])
             ->filters([
                 //
@@ -52,7 +65,11 @@ class BookResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()->after(function (EloquentCollection $records) {
+                        foreach ($records as $key => $record) {
+                            Storage::disk('public')->delete($record->image);
+                        }
+                    }),
                 ]),
             ]);
     }

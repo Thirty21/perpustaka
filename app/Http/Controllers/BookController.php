@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Book;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
 
 class BookController extends Controller
 {
@@ -15,7 +16,8 @@ class BookController extends Controller
 
     public function showBorrowForm($id)
     {
-        $book = Book::findOrFail($id);
+        $decryptID = Crypt::decryptString($id);
+        $book = Book::findOrFail($decryptID);
 
         return view('book.borrow', compact('book'));
     }
@@ -32,8 +34,6 @@ class BookController extends Controller
 
         // Check if the book is available (stock > 0)
         if ($book->stock > 0) {
-            // Save the borrowing information to your database
-            // Adjust this part based on your actual model and database structure
             $borrowing = $book->borrowings()->create([
                 'name' => $request->input('name'),
                 'borrowed_at' => $request->input('borrow_date'),
@@ -43,9 +43,16 @@ class BookController extends Controller
             // Decrease the stock by 1
             $book->decrement('stock');
 
-            return redirect('books')->with('success', 'Book borrowed successfully.');
+            return redirect('')->with('success', 'Book borrowed successfully.');
         } else {
-            return redirect()->route('book')->with('error', 'Book is not available for borrowing.');
+            return redirect('')->with('error', 'Book is not available for borrowing.');
         }
+    }
+
+    public function show($id)
+    {
+        $decryptID = Crypt::decryptString($id);
+        $book = Book::findOrFail($decryptID);
+        return view('book.show', compact('book'));
     }
 }

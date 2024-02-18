@@ -2,8 +2,10 @@
 
 namespace App\Filament\Resources\BookResource\Pages;
 
-use App\Filament\Resources\BookResource;
 use Filament\Actions;
+use Illuminate\Support\Facades\Storage;
+use App\Filament\Resources\BookResource;
+use App\Models\Book;
 use Filament\Resources\Pages\EditRecord;
 
 class EditBook extends EditRecord
@@ -13,7 +15,13 @@ class EditBook extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            Actions\DeleteAction::make()->after(
+                function (Book $record) {
+                    if ($record->image) {
+                        Storage::disk('public')->delete($record->image);
+                    }
+                }
+            ),
         ];
     }
 }

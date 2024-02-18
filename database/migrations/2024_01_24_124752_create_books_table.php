@@ -16,6 +16,8 @@ return new class extends Migration
             $table->string('title');
             $table->text('description');
             $table->integer('stock');
+            $table->string('image')->nullable();
+            // $table->foreignId('category_id')->constrained('categories')->cascadeOnDelete();
             $table->timestamps();
         });
     }
@@ -25,6 +27,9 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::table('books', function (Blueprint $table) {
+            $table->dropColumn('image');
+        });
         Schema::dropIfExists('books');
     }
 };
